@@ -19,8 +19,6 @@ class HomeWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.label = QLabel("Welcome to KeyStore!")
-        self.open_button = QPushButton("Open")
-        self.open_button.clicked.connect(self.open_vault)
         self.vlayout = QVBoxLayout()
         for vault in [Vault("vault1"), Vault("vault2"), Vault("vault3")]:
             card = QHBoxLayout()
@@ -33,7 +31,6 @@ class HomeWidget(QWidget):
             self.vlayout.addLayout(card)
 
         self.vlayout.addWidget(self.label)
-        self.vlayout.addWidget(self.open_button)
         self.setLayout(self.vlayout)
 
     def open_vault(self, vault):
@@ -51,6 +48,11 @@ class VaultWidget(QWidget):
         self.vlayout.addWidget(self.label)
         self.vlayout.addWidget(self.go_back_button)
         self.setLayout(self.vlayout)
+
+        Store.vault_changed.connect(self.update_label)
+
+    def update_label(self):
+        self.label.setText(f"Welcome to {Store.get_vault_name()}!")
 
     def go_back(self):
         self.parent().setCurrentIndex(0)

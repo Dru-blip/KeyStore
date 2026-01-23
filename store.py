@@ -1,14 +1,19 @@
+from PySide6.QtCore import QObject, Signal
+
 from models import Vault
 
 
-class DataStore:
+class DataStore(QObject):
+    vault_changed = Signal(name="vault_changed")
+
     def __init__(self):
+        super().__init__()
         self.index = 0
         self.vault = Vault("dummy")
 
     def set_vault(self, vault):
         self.vault = vault
-        print("setting vault", self.vault.name)
+        self.vault_changed.emit()
 
     def get_vault(self):
         return self.vault
