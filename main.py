@@ -1,9 +1,11 @@
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QAbstractTableModel, QSize, Qt
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QPushButton,
     QStackedWidget,
@@ -20,6 +22,7 @@ class HomeWidget(QWidget):
         super().__init__(parent)
         self.label = QLabel("Welcome to KeyStore!")
         self.vlayout = QVBoxLayout()
+
         for vault in [Vault("vault1"), Vault("vault2"), Vault("vault3")]:
             card = QHBoxLayout()
             open_vault_button = QPushButton("Open")
@@ -30,12 +33,25 @@ class HomeWidget(QWidget):
             card.addWidget(open_vault_button)
             self.vlayout.addLayout(card)
 
-        self.vlayout.addWidget(self.label)
         self.setLayout(self.vlayout)
 
     def open_vault(self, vault):
         Store.set_vault(vault)
         self.parent().setCurrentIndex(1)
+
+
+class RecordWidget(QWidget):
+    def __init__(self, record, parent=None):
+        super().__init__(parent)
+        self.record = record
+
+        card_layout = QHBoxLayout()
+        self.setLayout(card_layout)
+        card_layout.addWidget(QLabel(self.record.site))
+        cardItem = QListWidgetItem()
+        cardItem.setSizeHint(self.sizeHint())
+        card_layout.addWidget(QPushButton("Edit"))
+        card_layout.addWidget(QPushButton("Delete"))
 
 
 class VaultWidget(QWidget):
@@ -44,9 +60,21 @@ class VaultWidget(QWidget):
         self.label = QLabel(f"Welcome to {Store.get_vault_name()}!")
         self.go_back_button = QPushButton("Go Back")
         self.go_back_button.clicked.connect(self.go_back)
+
         self.vlayout = QVBoxLayout()
         self.vlayout.addWidget(self.label)
         self.vlayout.addWidget(self.go_back_button)
+
+        self.records = QListWidget()
+        for record in Store.get_records():
+            card = RecordWidget(record)
+            cardItem = QListWidgetItem()
+            cardItem.setSizeHint(card.sizeHint())
+            self.records.addItem(cardItem)
+            self.records.setItemWidget(cardItem, card)
+
+        self.vlayout.addWidget(self.records)
+
         self.setLayout(self.vlayout)
 
         Store.vault_changed.connect(self.update_label)
@@ -61,7 +89,7 @@ class VaultWidget(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("My App")
+        self.setWindowTitle("KeyStore")
 
         self.setup_menubar()
         self.container = QStackedWidget()

@@ -21,5 +21,8 @@ class DataStore(QObject):
     def get_vault_name(self):
         return self.vault.name
 
+    def get_records(self):
+        return self.vault.records
+
 
 Store = DataStore()
