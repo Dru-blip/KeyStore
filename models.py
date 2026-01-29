@@ -23,6 +23,9 @@ class Vault:
     def add_record(self, name: str, username: str, password: str):
         self.records.append(Record(name, username, password))
 
+    def delete_record(self, record: Record):
+        self.records.remove(record)
+
     def toJson(self):
         return jsonpickle.encode(self.records)
 

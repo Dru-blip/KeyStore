@@ -78,8 +78,18 @@ def vault():
     @ui.refreshable
     def records_ui():
         with ui.grid(columns=1):
-            for item in store.vault.records:
-                ui.label(item.name)
+            for record in store.vault.records:
+                with ui.card().props("flat bordered"):
+                    ui.label(record.name)
+                    ui.button(
+                        icon="delete",
+                        on_click=lambda e, record=record: delete_record(record),
+                    )
+
+    def delete_record(record):
+        store.vault.delete_record(record)
+        encrypt_vault(store.vault)
+        records_ui.refresh()
 
     def save_record(dialog):
         if not new_site or not new_username or not new_password:
