@@ -1,9 +1,16 @@
+from cryptography.exceptions import InvalidTag
 from nicegui import app, ui
 
-from utils import create_vault, decrypt_vault
+from models import store
+from utils import create_vault, decrypt_vault, encrypt_vault
 
 vault_created = app.storage.general.get("vault_created", False)
 vault_password = ""
+
+
+new_site = ""
+new_username = ""
+new_password = ""
 
 
 def set_master_password(event):
@@ -11,18 +18,38 @@ def set_master_password(event):
     vault_password = event.value
 
 
+def set_site(e):
+    global new_site
+    new_site = e.value
+
+
+def set_username(e):
+    global new_username
+    new_username = e.value
+
+
+def set_password(e):
+    global new_password
+    new_password = e.value
+
+
 def handle_create_vault():
     global vault_created
     vault_created = True
     app.storage.general["vault_created"] = True
     create_vault(vault_password.encode())
+    ui.navigate.to("/vault")
 
 
 def handle_open_vault():
-    decrypt_vault(vault_password.encode())
+    try:
+        decrypt_vault(vault_password.encode())
+        ui.navigate.to("/vault")
+    except InvalidTag:
+        ui.notify("Incorrect master password")
 
 
-@ui.page("/", dark=True)
+@ui.page("/")
 def main():
     if not vault_created:
         ui.input(
@@ -44,4 +71,41 @@ def main():
         ui.button("open vault", on_click=handle_open_vault)
 
 
-ui.run(native=True, storage_secret="secret")
+@ui.page("/vault")
+def vault():
+    ui.button("Back", on_click=lambda: ui.navigate.to("/"))
+
+    @ui.refreshable
+    def records_ui():
+        with ui.grid(columns=1):
+            for item in store.vault.records:
+                ui.label(item.name)
+
+    def save_record(dialog):
+        if not new_site or not new_username or not new_password:
+            ui.notify("All fields are required", type="warning")
+            return
+
+        store.vault.add_record(
+            name=new_site,
+            username=new_username,
+            password=new_password,
+        )
+        encrypt_vault(store.vault)
+        ui.notify("Record added")
+        records_ui.refresh()
+        dialog.close()
+
+    with ui.dialog() as dialog, ui.card():
+        ui.input(label="Site", on_change=set_site)
+        ui.input(label="Username", on_change=set_username)
+        ui.input(label="Password", password=True, on_change=set_password)
+
+        ui.button("Save", on_click=lambda: save_record(dialog))
+        ui.button("Cancel", on_click=dialog.close)
+
+    ui.button("Add Record", on_click=dialog.open)
+    records_ui()
+
+
+ui.run(native=True, dark=True, storage_secret="secret")

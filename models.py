@@ -1,12 +1,14 @@
-import json
+from dataclasses import dataclass
 from typing import List, Optional
 
+import jsonpickle
 
+
+@dataclass
 class Record:
-    def __init__(self, name: str, username: str, password: str):
-        self.name = name
-        self.username = username
-        self.password = password
+    name: str
+    username: str
+    password: str
 
 
 class Vault:
@@ -18,8 +20,11 @@ class Vault:
         self.key = key
         self.records: List[Record] = records
 
-    def __str__(self):
-        return json.dumps(self.records)
+    def add_record(self, name: str, username: str, password: str):
+        self.records.append(Record(name, username, password))
+
+    def toJson(self):
+        return jsonpickle.encode(self.records)
 
     def __repr__(self) -> str:
         return f"Vault<{self.key}>"

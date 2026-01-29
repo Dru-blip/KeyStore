@@ -1,7 +1,7 @@
 import base64
-import json
 import os
 
+import jsonpickle
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 from nicegui import app
@@ -22,7 +22,7 @@ def _derive_key(password: bytes) -> bytes:
     kdf = Argon2id(
         salt=salt,
         length=32,
-        iterations=200,
+        iterations=20,
         lanes=2,
         memory_cost=64 * 1024,
     )
@@ -40,7 +40,7 @@ def create_vault(password: bytes):
 
 def encrypt_vault(vault: Vault):
     key = vault.key
-    data = str(vault).encode()
+    data = vault.toJson().encode()
     cipher = AESGCM(key)
     nonce = os.urandom(16)
     ciphertext = cipher.encrypt(nonce, data, None)
@@ -59,5 +59,5 @@ def decrypt_vault(password: bytes):
 
     cipher = AESGCM(key)
     data = cipher.decrypt(nonce, ciphertext, None)
-    vault = Vault(key, json.loads(data))
+    vault = Vault(key, jsonpickle.decode(data))
     store.set_vault(vault)

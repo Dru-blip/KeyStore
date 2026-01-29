@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "cryptography>=46.0.3",
+    "jsonpickle>=4.1.1",
     "nicegui>=3.6.1",
     "pywebview>=6.1",
 ]
